@@ -68,9 +68,13 @@ class ConnectionPool(object):
         self._pool_lock = Lock()
         for i in range(0, self.pool_size):
             self._pool.put(self.new_conn())
-        self._cleanup_thread = Thread(target=self._cleanup, name='Cleanup thread')
-        self._cleanup_thread.daemon = True
-        self._cleanup_thread.start()
+
+        if self.cleanup_timeout > 0:
+            self._cleanup_thread = Thread(target=self._cleanup, name='Cleanup thread')
+            self._cleanup_thread.daemon = True
+            self._cleanup_thread.start()
+        else:
+            self._cleanup_thread = None
 
     def new_conn(self):
         """
@@ -116,7 +120,8 @@ class ConnectionPool(object):
             conn_wrapper = self.acquire()
             conn_wrapper.close_connection()
         self._pool = None
-        self._cleanup_thread.join()
+        if self._cleanup_thread is not None:
+            self._cleanup_thread.join()
 
     def _cleanup(self):
         active = True
