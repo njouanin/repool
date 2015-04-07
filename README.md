@@ -21,7 +21,7 @@ A new connection pool using default connection configurations (`host="localhost"
 
     from repool import ConnectionPool
 
-    pool = ConectionPool()
+    pool = ConnectionPool()
     cw = pool.acquire()         #returns a ConnectionWrapper instance
     conn = cw.connection()      #get the rethinkdb connection instance
     r.table('heroes').run(conn) #do RethinkDB stuff
@@ -30,3 +30,11 @@ A new connection pool using default connection configurations (`host="localhost"
     pool.release_pool()         #release pool (close rethinkdb connections)
 
 
+Optional arguments
+------------------
+
+`ConnectionPool` creation accepts a number of optional arguments :
+* `host`, `port`, `db`, `auth_key`, `timeout` : which corresponds to rethinkdb [connect()](http://rethinkdb.com/api/python/#connect) method.
+* `pool_size` : set the pool size, ie. th number of connection opened simultaneously (default=10).
+* `conn_ttl` : set the connection time to live. Connections older than TTL are automatically closed and re-opened by an internal thread (default=3600 seconds, set to 0 for disable)
+* `cleanup`: the interval between each pool cleanup for old connections (default=60 seconds)
