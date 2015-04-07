@@ -18,25 +18,26 @@ import unittest
 from unittest.mock import patch
 from unittest.mock import MagicMock
 #import logging
+from repool import ConnectionPool, ConnectionWrapper
 
 
 #logging.basicConfig(level="DEBUG")
 
 class TestPool(unittest.TestCase):
-    @patch('pool.r')
+    @patch('repool.pool.r')
     def test_create_pool(self, mock_r):
         mock_r.connect = MagicMock()
         mock_r.close = MagicMock()
-        from pool import ConnectionPool
+        from repool.pool import ConnectionPool
         p = ConnectionPool(cleanup=1)
         self.assertFalse(p.empty())
         p.release_pool()
 
-    @patch('pool.r')
+    @patch('repool.pool.r')
     def test_acquire_release_one(self, mock_r):
         mock_r.connect = MagicMock()
         mock_r.close = MagicMock()
-        from pool import ConnectionPool
+        from repool.pool import ConnectionPool
         p = ConnectionPool(cleanup=1)
         nb_init = p._pool.qsize()
         conn = p.acquire()
@@ -45,11 +46,11 @@ class TestPool(unittest.TestCase):
         self.assertEqual(nb_init, nb_term)
         p.release_pool()
 
-    @patch('pool.r')
+    @patch('repool.pool.r')
     def test_acquire_one(self, mock_r):
         mock_r.connect = MagicMock()
         mock_r.close = MagicMock()
-        from pool import ConnectionPool
+        from repool.pool import ConnectionPool
         p = ConnectionPool(cleanup=1)
         nb_init = p._pool.qsize()
         p.acquire()
@@ -57,11 +58,11 @@ class TestPool(unittest.TestCase):
         self.assertEqual(nb_init-1, nb_term)
         p.release_pool()
 
-    @patch('pool.r')
+    @patch('repool.pool.r')
     def test_acquire(self, mock_r):
         mock_r.connect = MagicMock()
         mock_r.close = MagicMock()
-        from pool import ConnectionPool, ConnectionWrapper
+        from repool.pool import ConnectionPool, ConnectionWrapper
         p = ConnectionPool(cleanup=1)
         conn = p.acquire()
         self.assertIsInstance(conn, ConnectionWrapper)

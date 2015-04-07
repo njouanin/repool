@@ -19,7 +19,7 @@ import rethinkdb as r
 from queue import Queue
 import time
 import logging
-from threading import Lock, Thread
+from threading import Lock, Thread, Event
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,9 @@ class ConnectionPool(object):
             self._pool.put(self.new_conn())
 
         if self.cleanup_timeout > 0:
-            self._cleanup_thread = Thread(target=self._cleanup, name='Cleanup thread')
+            self._thread_event = Event()
+            self._cleanup_thread = Thread(target=self._cleanup, name='Cleanup thread',
+                                          args=(self._thread_event, self.cleanup_timeout))
             self._cleanup_thread.daemon = True
             self._cleanup_thread.start()
         else:
@@ -119,38 +121,36 @@ class ConnectionPool(object):
         while not self._pool.empty():
             conn_wrapper = self.acquire()
             conn_wrapper.close_connection()
-        self._pool = None
         if self._cleanup_thread is not None:
+            self._thread_event.set()
             self._cleanup_thread.join()
+        self._pool = None
 
-    def _cleanup(self):
+    def _cleanup(self, stop_event, timeout):
         active = True
         logger.debug("Starting cleanup thread")
-        while active:
+        while not stop_event.is_set():
             import time
-            time.sleep(self.cleanup_timeout)
-            if self._pool is None:
-                active = False
-            else:
-                logger.debug(" starting cleanup")
-                now = time.time()
-                queue_tmp = Queue()
-                try:
-                    self._pool_lock.acquire()
-                    nb = 0
-                    while not self._pool.empty():
-                        conn_wrapper = self._pool.get_nowait()
-                        if (now - conn_wrapper.connected_at) > self.conn_ttl:
-                            conn_wrapper.close_connection()
-                            del conn_wrapper
-                            queue_tmp.put(self.new_conn())
-                            nb += 1
-                        else:
-                            queue_tmp.put(conn_wrapper)
-                    self._pool = queue_tmp
-                    self._pool_lock.release()
-                    logger.debug(" %d connection(s) cleaned" % nb)
-                except Exception as e:
-                    logger.exception(e)
-                    pass
+            stop_event.wait(timeout)
+            logger.debug(" starting cleanup")
+            now = time.time()
+            queue_tmp = Queue()
+            try:
+                self._pool_lock.acquire()
+                nb = 0
+                while not self._pool.empty():
+                    conn_wrapper = self._pool.get_nowait()
+                    if (now - conn_wrapper.connected_at) > self.conn_ttl:
+                        conn_wrapper.close_connection()
+                        del conn_wrapper
+                        queue_tmp.put(self.new_conn())
+                        nb += 1
+                    else:
+                        queue_tmp.put(conn_wrapper)
+                self._pool = queue_tmp
+                self._pool_lock.release()
+                logger.debug(" %d connection(s) cleaned" % nb)
+            except Exception as e:
+                logger.exception(e)
+                pass
         logger.debug("Cleanup thread ending")
