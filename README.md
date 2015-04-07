@@ -2,6 +2,7 @@ RethinkDB connection pool
 =========================
 
 `repool` is a Python library which provides a connection pool management for accessing a [RethinkDB](http://rethinkdb.com/) database. `repool` creates and maintains a configurable pool of active connection to a RethinkDB database. These connections are then available individually through a basic API.
+
 Internally, `repool` uses the Python [Queue](https://docs.python.org/3.4/library/queue.html) class which is thread-safe. This means that the same connection pool can be share between several threads.
 
 
