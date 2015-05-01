@@ -67,8 +67,10 @@ class ConnectionPool(object):
 
         self._pool = Queue()
         self._pool_lock = Lock()
+        self._pool_lock.acquire()
         for i in range(0, self.pool_size):
             self._pool.put(self.new_conn())
+        self._pool_lock.release()
 
         if self.cleanup_timeout > 0:
             self._thread_event = Event()
@@ -120,8 +122,8 @@ class ConnectionPool(object):
     def release_pool(self):
         """Release pool and all its connection"""
         while not self._pool.empty():
-            conn_wrapper = self.acquire()
-            conn_wrapper.close_connection()
+            conn = self.acquire()
+            conn.close_connection()
         if self._cleanup_thread is not None:
             self._thread_event.set()
             self._cleanup_thread.join()
