@@ -24,10 +24,10 @@ A new connection pool using default connection configurations (`host="localhost"
     from repool import ConnectionPool
 
     pool = ConnectionPool()
-    cw = pool.acquire()         #returns a ConnectionWrapper instance
-    r.table('heroes').run(cw.connection()) #do RethinkDB stuff
+    conn = pool.acquire()         #returns a Connection instance
+    r.table('heroes').run(conn)   #do RethinkDB stuff
     # ...
-    pool.release(cw)            #put back connection to the pool
+    pool.release(conn)          #put back connection to the pool
     pool.release_pool()         #release pool (close rethinkdb connections)
 
 

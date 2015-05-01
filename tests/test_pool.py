@@ -62,9 +62,9 @@ class TestPool(unittest.TestCase):
     def test_acquire(self, mock_r):
         mock_r.connect = MagicMock()
         mock_r.close = MagicMock()
-        from repool.pool import ConnectionPool, ConnectionWrapper
+        from repool.pool import ConnectionPool
         p = ConnectionPool(cleanup=1)
         conn = p.acquire()
-        self.assertIsInstance(conn, ConnectionWrapper)
+        self.assertIsInstance(conn, MagicMock)
         p.release(conn)
         p.release_pool()

@@ -46,6 +46,7 @@ class ConnectionWrapper(object):
     def __del__(self):
         self.close_connection()
 
+
 class ConnectionPool(object):
     """A rethinkDB connection pool
     >>> pool = ConnectionPool()
@@ -102,13 +103,13 @@ class ConnectionPool(object):
         else:
             conn_wrapper = self._pool.get(True, timeout)
         self._pool_lock.release()
-        return conn_wrapper
+        return conn_wrapper.connection
 
-    def release(self, conn_wrapper):
+    def release(self, conn):
         """Release a previously acquired connection.
         The connection is put back into the pool."""
         self._pool_lock.acquire()
-        self._pool.put(conn_wrapper)
+        self._pool.put(ConnectionWrapper(self._pool, conn))
         self._pool_lock.release()
 
     def empty(self):
