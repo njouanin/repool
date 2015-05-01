@@ -24,6 +24,10 @@ from threading import Lock, Thread, Event
 logger = logging.getLogger(__name__)
 
 
+class PoolException(Exception):
+    pass
+
+
 class ConnectionWrapper(object):
     def __init__(self, pool, conn=None, **kwargs):
         self._pool = pool
@@ -70,6 +74,7 @@ class ConnectionPool(object):
         self._pool_lock.acquire()
         for i in range(0, self.pool_size):
             self._pool.put(self.new_conn())
+        self._current_acquired = 0
         self._pool_lock.release()
 
         if self.cleanup_timeout > 0:
@@ -104,6 +109,7 @@ class ConnectionPool(object):
             conn_wrapper = self._pool.get_nowait()
         else:
             conn_wrapper = self._pool.get(True, timeout)
+        self._current_acquired += 1
         self._pool_lock.release()
         return conn_wrapper.connection
 
@@ -112,6 +118,7 @@ class ConnectionPool(object):
         The connection is put back into the pool."""
         self._pool_lock.acquire()
         self._pool.put(ConnectionWrapper(self._pool, conn))
+        self._current_acquired -= 1
         self._pool_lock.release()
 
     def empty(self):
@@ -121,6 +128,8 @@ class ConnectionPool(object):
 
     def release_pool(self):
         """Release pool and all its connection"""
+        if self._current_acquired > 0:
+            raise PoolException("Can't release pool: %d connection(s) still acquired" % self._current_acquired)
         while not self._pool.empty():
             conn = self.acquire()
             conn.close_connection()

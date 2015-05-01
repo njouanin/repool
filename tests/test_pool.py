@@ -53,9 +53,10 @@ class TestPool(unittest.TestCase):
         from repool.pool import ConnectionPool
         p = ConnectionPool(cleanup=1)
         nb_init = p._pool.qsize()
-        p.acquire()
+        conn = p.acquire()
         nb_term = p._pool.qsize()
         self.assertEqual(nb_init-1, nb_term)
+        p.release(conn)
         p.release_pool()
 
     @patch('repool.pool.r')
@@ -68,3 +69,15 @@ class TestPool(unittest.TestCase):
         self.assertIsInstance(conn, MagicMock)
         p.release(conn)
         p.release_pool()
+
+    @patch('repool.pool.r')
+    def test_release_pool(self, mock_r):
+        mock_r.connect = MagicMock()
+        mock_r.close = MagicMock()
+        from repool.pool import ConnectionPool, PoolException
+        p = ConnectionPool(cleanup=1)
+        conn1 = p.acquire()
+        conn2 = p.acquire()
+        p.release(conn1)
+        with self.assertRaises(PoolException):
+            p.release_pool()
