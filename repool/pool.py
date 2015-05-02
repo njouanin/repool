@@ -88,7 +88,7 @@ class ConnectionPool(object):
         """
         :return:
         """
-        logger.debug("Opening new connection with args=%s" % self._conn_args)
+        logger.debug("Opening new connection to rethinkdb with args=%s" % self._conn_args)
         return ConnectionWrapper(self._pool, **self._conn_args)
 
     def acquire(self, timeout=None):
@@ -137,7 +137,7 @@ class ConnectionPool(object):
         while not stop_event.is_set():
             import time
             stop_event.wait(timeout)
-            logger.debug(" starting cleanup")
+            logger.debug("Cleanup thread running...")
             now = time.time()
             queue_tmp = Queue()
             try:
