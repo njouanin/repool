@@ -41,15 +41,6 @@ class ConnectionWrapper(object):
     def connection(self):
         return self._conn
 
-    def close_connection(self):
-        try:
-            self._conn.close()
-        except:
-            pass
-
-    def __del__(self):
-        self.close_connection()
-
 
 class ConnectionPool(object):
     """A rethinkDB connection pool
@@ -68,6 +59,9 @@ class ConnectionPool(object):
         self.conn_ttl = int(kwargs.get('conn_ttl', 3600))
         self.cleanup_timeout = int(kwargs.get('cleanup', 60))
         self._conn_args = kwargs
+        self._conn_args.pop('pool_size', None)
+        self._conn_args.pop('conn_ttl', None)
+        self._conn_args.pop('cleanup', None)
 
         self._pool = Queue()
         self._pool_lock = Lock()
@@ -139,7 +133,6 @@ class ConnectionPool(object):
         self._pool = None
 
     def _cleanup(self, stop_event, timeout):
-        active = True
         logger.debug("Starting cleanup thread")
         while not stop_event.is_set():
             import time
@@ -153,7 +146,7 @@ class ConnectionPool(object):
                 while not self._pool.empty():
                     conn_wrapper = self._pool.get_nowait()
                     if (now - conn_wrapper.connected_at) > self.conn_ttl:
-                        conn_wrapper.close_connection()
+                        conn_wrapper.connection.close()
                         del conn_wrapper
                         queue_tmp.put(self.new_conn())
                         nb += 1
