@@ -16,10 +16,17 @@
 # along with Repool.  If not, see <http://www.gnu.org/licenses/>.
 
 import rethinkdb as r
-from queue import Queue
+import sys
 import time
 import logging
 from threading import Lock, Thread, Event
+
+is_py2 = sys.version[0] == '2'
+if is_py2:
+    from Queue import Queue
+else:
+    from queue import Queue
+
 
 logger = logging.getLogger(__name__)
 
