@@ -17,11 +17,11 @@
 import unittest
 from unittest.mock import patch
 from unittest.mock import MagicMock
-#import logging
+# import logging
 from repool import ConnectionPool, ConnectionWrapper
 
 
-#logging.basicConfig(level="DEBUG")
+# logging.basicConfig(level="DEBUG")
 
 class TestPool(unittest.TestCase):
     @patch('repool.pool.r')
@@ -55,7 +55,7 @@ class TestPool(unittest.TestCase):
         nb_init = p._pool.qsize()
         conn = p.acquire()
         nb_term = p._pool.qsize()
-        self.assertEqual(nb_init-1, nb_term)
+        self.assertEqual(nb_init - 1, nb_term)
         p.release(conn)
         p.release_pool()
 
@@ -81,3 +81,14 @@ class TestPool(unittest.TestCase):
         p.release(conn1)
         with self.assertRaises(PoolException):
             p.release_pool()
+
+    @patch('repool.pool.r')
+    def test_connect(self, mock_r):
+        mock_r.connect = MagicMock()
+        mock_r.close = MagicMock()
+        from repool.pool import ConnectionPool
+        p = ConnectionPool(pool_size=1)
+        with p.connect() as conn:
+            self.assertEqual(0, p._pool.qsize())
+        self.assertEqual(1, p._pool.qsize())
+        p.release_pool()

@@ -159,3 +159,26 @@ class ConnectionPool(object):
                 logger.exception(e)
                 pass
         logger.debug("Cleanup thread ending")
+
+    def connect(self, timeout=None):
+        '''Acquire a new connection with `with` statement and auto release the connection after
+            go out the with block
+
+        :param timeout: @see #aquire
+        :returns: Returns a RethinkDB connection
+        :raises Empty: No resources are available before timeout.
+        '''
+        return self.__F__(self, timeout)
+
+    class __F__:
+        def __init__(self, pool, timeout=None):
+            self.pool = pool
+            self.timeout = timeout
+
+        def __enter__(self):
+            self.conn = self.pool.acquire(self.timeout)
+            return self.conn
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if self.conn:
+                self.pool.release(self.conn)

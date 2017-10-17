@@ -30,6 +30,12 @@ A new connection pool using default connection configurations (`host="localhost"
     pool.release(conn)          #put back connection to the pool
     pool.release_pool()         #release pool (close rethinkdb connections)
 
+    # ...
+    with pool.connect() as conn1:
+        # do something with conn1
+    # pool.release(conn1) is automatically called after leaving the with code block
+
+
 
 Optional arguments
 ------------------
