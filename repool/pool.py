@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with Repool.  If not, see <http://www.gnu.org/licenses/>.
 
-import rethinkdb as r
+from rethinkdb import r
 from queue import Queue
 import time
 import logging
