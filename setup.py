@@ -20,14 +20,14 @@ from setuptools import setup, find_packages
 
 setup(
   name = "repool",
-  version = "0.2",
+  version = "0.4",
   description="Connection pool for rethinkdb",
   author="Nicolas Jouanin",
   author_email='nicolas.jouanin@gmail.com',
   url="https://github.com/njouanin/repool",
   license='GPLv3',
   packages=find_packages(exclude=['tests']),
-  install_requires=['rethinkdb'],
+  install_requires=['rethinkdb>=2.4.2'],
   classifiers=[
     'Development Status :: 2 - Pre-Alpha',
     'Intended Audience :: Developers',
